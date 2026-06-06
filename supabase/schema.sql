@@ -230,6 +230,7 @@ LANGUAGE plpgsql
 STABLE
 SECURITY DEFINER
 SET search_path = public
+SET row_security = off
 AS $$
 BEGIN
   RETURN (
@@ -247,6 +248,7 @@ LANGUAGE plpgsql
 STABLE
 SECURITY DEFINER
 SET search_path = public
+SET row_security = off
 AS $$
 BEGIN
   RETURN (
@@ -264,6 +266,7 @@ LANGUAGE plpgsql
 STABLE
 SECURITY DEFINER
 SET search_path = public
+SET row_security = off
 AS $$
 BEGIN
   RETURN (
@@ -275,18 +278,76 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION public.sync_profile_metadata_to_auth_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  UPDATE auth.users
+  SET raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || jsonb_build_object(
+    'full_name', NEW.full_name,
+    'role', NEW.role,
+    'department', NEW.department,
+    'profile_id', NEW.id
+  )
+  WHERE id = NEW.user_id;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS sync_profile_metadata_to_auth_user_trigger ON profiles;
+CREATE TRIGGER sync_profile_metadata_to_auth_user_trigger
+  AFTER INSERT OR UPDATE ON profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.sync_profile_metadata_to_auth_user();
+
+CREATE OR REPLACE FUNCTION public.can_current_professor_view_profile(target_profile_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+SET row_security = off
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1
+    FROM courses
+    JOIN course_enrollments
+      ON course_enrollments.course_id = courses.id
+    WHERE courses.professor_id::text = auth.jwt() -> 'user_metadata' ->> 'profile_id'
+      AND course_enrollments.user_id = target_profile_id
+  );
+END;
+$$;
+
 -- Políticas RLS para profiles
 CREATE POLICY "Usuários podem ver seu próprio perfil"
   ON profiles FOR SELECT
   USING (auth.uid() = user_id);
 
+CREATE POLICY "Professores podem ver perfis de seus alunos"
+  ON profiles FOR SELECT
+  USING (public.can_current_professor_view_profile(id));
 
+CREATE POLICY "Coordenadores podem ver perfis do departamento"
+  ON profiles FOR SELECT
+  USING (
+    auth.jwt() -> 'user_metadata' ->> 'role' = 'coordenador'
+    AND auth.jwt() -> 'user_metadata' ->> 'department' IS NOT NULL
+    AND department = auth.jwt() -> 'user_metadata' ->> 'department'
+  );
 
+CREATE POLICY "Diretores podem ver todos os perfis"
+  ON profiles FOR SELECT
+  USING (auth.jwt() -> 'user_metadata' ->> 'role' = 'diretor');
 
 CREATE POLICY "Usuários podem atualizar seu próprio perfil"
   ON profiles FOR UPDATE
   USING (auth.uid() = user_id);
-
 -- Políticas RLS para courses
 CREATE POLICY "Todos podem ver cursos publicados"
   ON courses FOR SELECT
@@ -321,44 +382,41 @@ CREATE POLICY "Professores podem atualizar seus cursos"
     professor_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
   );
 
--- Políticas RLS para course_enrollments
-CREATE POLICY "Alunos podem ver suas matrículas"
-  ON course_enrollments FOR SELECT
-  USING (user_id = (SELECT id FROM profiles WHERE user_id = auth.uid()));
+-- Políticas RLS para profiles
+CREATE POLICY "Usuários podem ver seu próprio perfil"
+  ON profiles FOR SELECT
+  USING (auth.uid() = user_id);
 
-CREATE POLICY "Professores podem ver matrículas de seus cursos"
-  ON course_enrollments FOR SELECT
+CREATE POLICY "Professores podem ver perfis de seus alunos"
+  ON profiles FOR SELECT
   USING (
     EXISTS (
       SELECT 1 FROM courses
-      WHERE courses.id = course_enrollments.course_id
-      AND courses.professor_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
+      WHERE courses.professor_id = public.get_current_profile_id()
+      AND EXISTS (
+        SELECT 1 FROM course_enrollments
+        WHERE course_enrollments.course_id = courses.id
+        AND course_enrollments.user_id = profiles.id
+      )
     )
   );
 
-CREATE POLICY "Alunos podem se matricular"
-  ON course_enrollments FOR INSERT
-  WITH CHECK (
-    user_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
-    AND (SELECT role FROM profiles WHERE user_id = auth.uid()) = 'aluno'
+CREATE POLICY "Coordenadores podem ver perfis do departamento"
+  ON profiles FOR SELECT
+  USING (
+    public.get_current_profile_role() = 'coordenador'
+    AND public.get_current_profile_department() IS NOT NULL
+    AND department = public.get_current_profile_department()
   );
 
--- Políticas RLS para materials
-CREATE POLICY "Alunos podem ver materiais de cursos matriculados"
-  ON materials FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM course_enrollments
-      WHERE course_enrollments.course_id = materials.course_id
-      AND course_enrollments.user_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
-    )
-  );
+CREATE POLICY "Diretores podem ver todos os perfis"
+  ON profiles FOR SELECT
+  USING (public.get_current_profile_role() = 'diretor');
 
-CREATE POLICY "Professores podem ver materiais de seus cursos"
-  ON materials FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM courses
+CREATE POLICY "Usuários podem atualizar seu próprio perfil"
+  ON profiles FOR UPDATE
+  USING (auth.uid() = user_id);
+-- Políticas RLS para courses
       WHERE courses.id = materials.course_id
       AND courses.professor_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
     )
@@ -384,50 +442,41 @@ CREATE POLICY "Professores podem atualizar materiais"
     )
   );
 
--- Políticas RLS para quizzes
-CREATE POLICY "Alunos podem ver quizzes de cursos matriculados"
-  ON quizzes FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM course_enrollments
-      WHERE course_enrollments.course_id = quizzes.course_id
-      AND course_enrollments.user_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
-    )
-  );
+-- Políticas RLS para profiles
+CREATE POLICY "Usuários podem ver seu próprio perfil"
+  ON profiles FOR SELECT
+  USING (auth.uid() = user_id);
 
-CREATE POLICY "Professores podem ver quizzes de seus cursos"
-  ON quizzes FOR SELECT
+CREATE POLICY "Professores podem ver perfis de seus alunos"
+  ON profiles FOR SELECT
   USING (
     EXISTS (
       SELECT 1 FROM courses
-      WHERE courses.id = quizzes.course_id
-      AND courses.professor_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
-    )
-  );
-
-CREATE POLICY "Professores podem criar quizzes"
-  ON quizzes FOR INSERT
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM courses
-      WHERE courses.id = quizzes.course_id
-      AND courses.professor_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
-    )
-  );
-
--- Políticas RLS para quiz_attempts
-CREATE POLICY "Alunos podem ver suas tentativas"
-  ON quiz_attempts FOR SELECT
-  USING (user_id = (SELECT id FROM profiles WHERE user_id = auth.uid()));
-
-CREATE POLICY "Professores podem ver tentativas de seus cursos"
-  ON quiz_attempts FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM quizzes
-      WHERE quizzes.id = quiz_attempts.quiz_id
+      WHERE courses.professor_id = public.get_current_profile_id()
       AND EXISTS (
-        SELECT 1 FROM courses
+        SELECT 1 FROM course_enrollments
+        WHERE course_enrollments.course_id = courses.id
+        AND course_enrollments.user_id = profiles.id
+      )
+    )
+  );
+
+CREATE POLICY "Coordenadores podem ver perfis do departamento"
+  ON profiles FOR SELECT
+  USING (
+    public.get_current_profile_role() = 'coordenador'
+    AND public.get_current_profile_department() IS NOT NULL
+    AND department = public.get_current_profile_department()
+  );
+
+CREATE POLICY "Diretores podem ver todos os perfis"
+  ON profiles FOR SELECT
+  USING (public.get_current_profile_role() = 'diretor');
+
+CREATE POLICY "Usuários podem atualizar seu próprio perfil"
+  ON profiles FOR UPDATE
+  USING (auth.uid() = user_id);
+-- Políticas RLS para courses
         WHERE courses.id = quizzes.course_id
         AND courses.professor_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
       )
@@ -441,61 +490,41 @@ CREATE POLICY "Alunos podem criar tentativas"
     AND (SELECT role FROM profiles WHERE user_id = auth.uid()) = 'aluno'
   );
 
--- Políticas RLS para chat_messages
-CREATE POLICY "Participantes podem ver mensagens"
-  ON chat_messages FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM chat_rooms
-      WHERE chat_rooms.id = chat_messages.room_id
-      AND EXISTS (
-        SELECT 1 FROM course_enrollments
-        WHERE course_enrollments.course_id = chat_rooms.course_id
-        AND course_enrollments.user_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
-      )
-    )
-  );
+-- Políticas RLS para profiles
+CREATE POLICY "Usuários podem ver seu próprio perfil"
+  ON profiles FOR SELECT
+  USING (auth.uid() = user_id);
 
-CREATE POLICY "Participantes podem enviar mensagens"
-  ON chat_messages FOR INSERT
-  WITH CHECK (
-    user_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
-    AND EXISTS (
-      SELECT 1 FROM chat_rooms
-      WHERE chat_rooms.id = chat_messages.room_id
-      AND EXISTS (
-        SELECT 1 FROM course_enrollments
-        WHERE course_enrollments.course_id = chat_rooms.course_id
-        AND course_enrollments.user_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
-      )
-    )
-  );
-
--- Políticas RLS para notifications
-CREATE POLICY "Usuários podem ver suas notificações"
-  ON notifications FOR SELECT
-  USING (user_id = (SELECT id FROM profiles WHERE user_id = auth.uid()));
-
-CREATE POLICY "Usuários podem atualizar suas notificações"
-  ON notifications FOR UPDATE
-  USING (user_id = (SELECT id FROM profiles WHERE user_id = auth.uid()));
-
--- Políticas RLS para live_sessions
-CREATE POLICY "Participantes podem ver sessões ao vivo"
-  ON live_sessions FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM course_enrollments
-      WHERE course_enrollments.course_id = live_sessions.course_id
-      AND course_enrollments.user_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
-    )
-  );
-
-CREATE POLICY "Professores podem ver sessões de seus cursos"
-  ON live_sessions FOR SELECT
+CREATE POLICY "Professores podem ver perfis de seus alunos"
+  ON profiles FOR SELECT
   USING (
     EXISTS (
       SELECT 1 FROM courses
+      WHERE courses.professor_id = public.get_current_profile_id()
+      AND EXISTS (
+        SELECT 1 FROM course_enrollments
+        WHERE course_enrollments.course_id = courses.id
+        AND course_enrollments.user_id = profiles.id
+      )
+    )
+  );
+
+CREATE POLICY "Coordenadores podem ver perfis do departamento"
+  ON profiles FOR SELECT
+  USING (
+    public.get_current_profile_role() = 'coordenador'
+    AND public.get_current_profile_department() IS NOT NULL
+    AND department = public.get_current_profile_department()
+  );
+
+CREATE POLICY "Diretores podem ver todos os perfis"
+  ON profiles FOR SELECT
+  USING (public.get_current_profile_role() = 'diretor');
+
+CREATE POLICY "Usuários podem atualizar seu próprio perfil"
+  ON profiles FOR UPDATE
+  USING (auth.uid() = user_id);
+-- Políticas RLS para courses
       WHERE courses.id = live_sessions.course_id
       AND courses.professor_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
     )
@@ -542,3 +571,5 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+
