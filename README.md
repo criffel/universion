@@ -1,36 +1,181 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# UniVersion - Sistema de Gestão Universitária Inteligente
 
-## Getting Started
+Sistema completo de gestão universitária com suporte a cursos, materiais de apoio, múltiplos perfis de usuário (aluno, professor, coordenador, diretor) e agentes de IA para aprendizado.
 
-First, run the development server:
+## 🚀 Tecnologias
 
+- **Frontend**: Next.js 16 (App Router) + TypeScript + TailwindCSS + shadcn/ui
+- **Backend**: Node.js com API Routes do Next.js
+- **Banco de Dados**: Supabase (PostgreSQL)
+- **Autenticação**: Supabase Auth + SSO
+- **Email**: Resend
+- **IA**: OpenAI API (GPT-4)
+- **Real-time**: Supabase Realtime + WebSockets
+- **Deploy**: Vercel
+
+## 📋 Funcionalidades
+
+### Autenticação e Perfis
+- Login/registro com email e senha
+- Integração SSO (OAuth2/SAML)
+- 4 perfis de usuário: aluno, professor, coordenador, diretor
+- Permissões diferenciadas por perfil
+
+### Gestão de Cursos
+- CRUD de cursos
+- Categorização por departamento
+- Busca e filtros
+- Sistema de matrículas
+
+### Materiais de Apoio
+- Upload de PDFs, vídeos, imagens
+- Organização por módulo/aula
+- Visualização inline de PDFs
+- Player de vídeo integrado
+
+### Sistema de Quizzes
+- Múltipla escolha, verdadeiro/falso, dissertativa
+- Correção automática e manual
+- Notas e feedback
+
+### Aulas ao Vivo
+- Integração WebRTC para vídeo
+- Chat em tempo real
+- Compartilhamento de tela
+- Gravação das sessões
+
+### Chat por Curso
+- Chat em tempo real (Supabase Realtime)
+- Canais por curso
+- Notificações de novas mensagens
+
+### Agentes de IA
+- Chatbot de dúvidas
+- Assistente de estudo (resumos, flashcards)
+- Recomendações personalizadas
+- Correção automática com feedback
+- Análise de desempenho
+
+## 🛠️ Configuração
+
+### 1. Clone o repositório
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repositório>
+cd universion
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Instale as dependências
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Configure as variáveis de ambiente
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Copie o arquivo `env.example` para `.env.local` e preencha com suas credenciais:
 
-## Learn More
+```bash
+cp env.example .env.local
+```
 
-To learn more about Next.js, take a look at the following resources:
+Variáveis necessárias:
+- `NEXT_PUBLIC_SUPABASE_URL` - URL do projeto Supabase
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Chave anônima do Supabase
+- `SUPABASE_SERVICE_ROLE_KEY` - Chave de serviço do Supabase
+- `OPENAI_API_KEY` - Chave da API OpenAI
+- `RESEND_API_KEY` - Chave da API Resend
+- `RESEND_FROM_EMAIL` - Email de origem para envio
+- `NEXTAUTH_URL` - URL da aplicação
+- `NEXTAUTH_SECRET` - Segredo do NextAuth
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 4. Configure o banco de dados
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Execute o SQL do arquivo `supabase/schema.sql` no editor SQL do Supabase:
 
-## Deploy on Vercel
+```bash
+# Abra o painel do Supabase
+# Vá em SQL Editor
+# Cole o conteúdo de supabase/schema.sql
+# Execute
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 5. Execute o servidor de desenvolvimento
+```bash
+npm run dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Abra [http://localhost:3000](http://localhost:3000) no seu navegador.
+
+## 📁 Estrutura do Projeto
+
+```
+universion/
+├── app/
+│   ├── (auth)/          # Rotas de autenticação
+│   ├── (dashboard)/     # Rotas do dashboard
+│   │   ├── aluno/
+│   │   ├── professor/
+│   │   ├── coordenador/
+│   │   └── diretor/
+│   ├── (public)/        # Rotas públicas
+│   ├── api/             # API Routes
+│   ├── layout.tsx
+│   └── page.tsx
+├── components/
+│   ├── ui/              # Componentes shadcn/ui
+│   ├── auth/
+│   ├── dashboard/
+│   ├── courses/
+│   ├── materials/
+│   ├── quizzes/
+│   ├── chat/
+│   └── ai/
+├── lib/
+│   ├── supabase.ts
+│   ├── ai.ts
+│   └── utils.ts
+├── types/
+│   └── index.ts
+├── hooks/
+│   └── useAuth.ts
+└── supabase/
+    └── schema.sql
+```
+
+## 🔐 Segurança
+
+- Row Level Security (RLS) no Supabase
+- Proteção de rotas por middleware
+- Validação de dados com Zod
+- Sanitização de inputs
+- Rate limiting na API
+- HTTPS obrigatório
+
+## 📱 Responsividade
+
+O sistema é totalmente responsivo e funciona em:
+- Desktop
+- Tablet
+- Mobile
+- App mobile (React Native - em desenvolvimento)
+
+## 🚀 Deploy
+
+### Vercel
+
+1. Conecte seu repositório ao Vercel
+2. Configure as variáveis de ambiente
+3. Deploy automático
+
+### Supabase
+
+1. Crie um projeto no Supabase
+2. Execute o schema SQL
+3. Configure as variáveis de ambiente
+
+## 📝 Licença
+
+Este projeto está sob licença MIT.
+
+## 👥 Contribuindo
+
+Contribuições são bem-vindas! Por favor, abra uma issue ou pull request.
