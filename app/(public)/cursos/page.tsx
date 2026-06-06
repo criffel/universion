@@ -84,7 +84,14 @@ export default function CursosPage() {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
               <Input placeholder="Buscar cursos..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
             </div>
-            <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+            <Select
+              value={departmentFilter}
+              onValueChange={(value) => {
+                if (value) {
+                  setDepartmentFilter(value)
+                }
+              }}
+            >
               <SelectTrigger><SelectValue placeholder="Filtrar por departamento" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os Departamentos</SelectItem>

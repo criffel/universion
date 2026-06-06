@@ -119,7 +119,7 @@ export default function CursosPage() {
           <p className="mt-2 text-gray-600">Crie e edite seus cursos</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
+          <DialogTrigger>
             <Button onClick={() => {
               setEditingCourse(null)
               setFormData({ title: '', description: '', department: '', is_published: false })
@@ -147,7 +147,14 @@ export default function CursosPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="department">Departamento</Label>
-                  <Select value={formData.department} onValueChange={(value) => setFormData({ ...formData, department: value })}>
+                  <Select
+                    value={formData.department}
+                    onValueChange={(value) => {
+                      if (value) {
+                        setFormData({ ...formData, department: value })
+                      }
+                    }}
+                  >
                     <SelectTrigger><SelectValue placeholder="Selecione o departamento" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="engenharia">Engenharia</SelectItem>

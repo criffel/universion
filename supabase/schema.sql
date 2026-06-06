@@ -50,7 +50,7 @@ CREATE TABLE materials (
   file_size BIGINT,
   duration INTEGER,
   module TEXT,
-  order INTEGER DEFAULT 0,
+  "order" INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
@@ -91,7 +91,7 @@ CREATE TABLE quiz_questions (
   options JSONB,
   correct_answer TEXT,
   points INTEGER DEFAULT 1,
-  order INTEGER DEFAULT 0
+  "order" INTEGER DEFAULT 0
 );
 
 -- Tabela de tentativas de quiz
