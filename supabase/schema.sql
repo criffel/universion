@@ -224,45 +224,64 @@ ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE live_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai_conversations ENABLE ROW LEVEL SECURITY;
 
+CREATE OR REPLACE FUNCTION public.get_current_profile_id()
+RETURNS UUID
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN (
+    SELECT id
+    FROM public.profiles
+    WHERE user_id = auth.uid()
+    LIMIT 1
+  );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_current_profile_role()
+RETURNS TEXT
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN (
+    SELECT role
+    FROM public.profiles
+    WHERE user_id = auth.uid()
+    LIMIT 1
+  );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_current_profile_department()
+RETURNS TEXT
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN (
+    SELECT department
+    FROM public.profiles
+    WHERE user_id = auth.uid()
+    LIMIT 1
+  );
+END;
+$$;
+
 -- Políticas RLS para profiles
 CREATE POLICY "Usuários podem ver seu próprio perfil"
   ON profiles FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Professores podem ver perfis de seus alunos"
-  ON profiles FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM courses
-      WHERE courses.professor_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
-      AND EXISTS (
-        SELECT 1 FROM course_enrollments
-        WHERE course_enrollments.course_id = courses.id
-        AND course_enrollments.user_id = profiles.id
-      )
-    )
-  );
 
-CREATE POLICY "Coordenadores podem ver perfis do departamento"
-  ON profiles FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.user_id = auth.uid()
-      AND profiles.role = 'coordenador'
-      AND profiles.department = profiles.department
-    )
-  );
 
-CREATE POLICY "Diretores podem ver todos os perfis"
-  ON profiles FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.user_id = auth.uid()
-      AND profiles.role = 'diretor'
-    )
-  );
 
 CREATE POLICY "Usuários podem atualizar seu próprio perfil"
   ON profiles FOR UPDATE
