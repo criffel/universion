@@ -324,6 +324,66 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION public.is_current_profile_id(target_profile_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT (auth.jwt() -> 'user_metadata' ->> 'profile_id') = target_profile_id::text;
+$$;
+
+CREATE OR REPLACE FUNCTION public.current_user_role()
+RETURNS TEXT
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT auth.jwt() -> 'user_metadata' ->> 'role';
+$$;
+
+CREATE OR REPLACE FUNCTION public.current_user_department()
+RETURNS TEXT
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT auth.jwt() -> 'user_metadata' ->> 'department';
+$$;
+
+CREATE OR REPLACE FUNCTION public.current_user_teaches_course(target_course_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+SET row_security = off
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1
+    FROM courses
+    WHERE id = target_course_id
+      AND professor_id::text = auth.jwt() -> 'user_metadata' ->> 'profile_id'
+  );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.current_user_enrolled_in_course(target_course_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+SET row_security = off
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1
+    FROM course_enrollments
+    WHERE course_id = target_course_id
+      AND user_id::text = auth.jwt() -> 'user_metadata' ->> 'profile_id'
+  );
+END;
+$$;
+
 -- Políticas RLS para profiles
 CREATE POLICY "Usuários podem ver seu próprio perfil"
   ON profiles FOR SELECT
@@ -355,32 +415,66 @@ CREATE POLICY "Todos podem ver cursos publicados"
 
 CREATE POLICY "Professores podem ver seus cursos"
   ON courses FOR SELECT
-  USING (
-    professor_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
-  );
+  USING (public.is_current_profile_id(professor_id));
 
 CREATE POLICY "Alunos podem ver cursos matriculados"
   ON courses FOR SELECT
+  USING (public.current_user_enrolled_in_course(id));
+
+CREATE POLICY "Coordenadores podem ver cursos do departamento"
+  ON courses FOR SELECT
   USING (
-    EXISTS (
-      SELECT 1 FROM course_enrollments
-      WHERE course_enrollments.course_id = courses.id
-      AND course_enrollments.user_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
-    )
+    public.current_user_role() = 'coordenador'
+    AND public.current_user_department() IS NOT NULL
+    AND department = public.current_user_department()
   );
+
+CREATE POLICY "Diretores podem ver todos os cursos"
+  ON courses FOR SELECT
+  USING (public.current_user_role() = 'diretor');
 
 CREATE POLICY "Professores podem criar cursos"
   ON courses FOR INSERT
   WITH CHECK (
-    professor_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
-    AND (SELECT role FROM profiles WHERE user_id = auth.uid()) = 'professor'
+    public.is_current_profile_id(professor_id)
+    AND public.current_user_role() = 'professor'
   );
 
 CREATE POLICY "Professores podem atualizar seus cursos"
   ON courses FOR UPDATE
-  USING (
-    professor_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
+  USING (public.is_current_profile_id(professor_id));
+
+-- Políticas RLS para course_enrollments
+CREATE POLICY "Alunos podem ver suas matrículas"
+  ON course_enrollments FOR SELECT
+  USING (public.is_current_profile_id(user_id));
+
+CREATE POLICY "Alunos podem se matricular"
+  ON course_enrollments FOR INSERT
+  WITH CHECK (
+    public.is_current_profile_id(user_id)
+    AND public.current_user_role() = 'aluno'
   );
+
+CREATE POLICY "Professores podem ver matrículas de seus cursos"
+  ON course_enrollments FOR SELECT
+  USING (public.current_user_teaches_course(course_id));
+
+CREATE POLICY "Coordenadores podem ver matrículas do departamento"
+  ON course_enrollments FOR SELECT
+  USING (
+    public.current_user_role() = 'coordenador'
+    AND EXISTS (
+      SELECT 1
+      FROM courses
+      WHERE courses.id = course_enrollments.course_id
+        AND courses.department = public.current_user_department()
+    )
+  );
+
+CREATE POLICY "Diretores podem ver todas as matrículas"
+  ON course_enrollments FOR SELECT
+  USING (public.current_user_role() = 'diretor');
 
 -- Políticas RLS para profiles
 CREATE POLICY "Usuários podem ver seu próprio perfil"
