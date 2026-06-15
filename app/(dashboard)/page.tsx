@@ -20,6 +20,10 @@ export default function DashboardPage() {
         router.push('/dashboard/coordenador')
       } else if (hasRole('diretor')) {
         router.push('/dashboard/diretor')
+      } else if (hasRole('responsavel')) {
+        router.push('/dashboard/responsavel')
+      } else if (hasRole('empresa')) {
+        router.push('/dashboard/empresa')
       }
     }
   }, [profile, loading, hasRole, router])

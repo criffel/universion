@@ -1,4 +1,4 @@
-export type UserRole = 'aluno' | 'professor' | 'coordenador' | 'diretor'
+export type UserRole = 'aluno' | 'professor' | 'coordenador' | 'diretor' | 'responsavel' | 'empresa'
 
 export interface Profile {
   id: string
@@ -9,6 +9,7 @@ export interface Profile {
   avatar_url?: string
   phone?: string
   department?: string
+  organization_id?: string
   created_at: string
   updated_at: string
 }
@@ -165,3 +166,221 @@ export interface AIConversation {
   created_at: string
   updated_at: string
 }
+
+export interface Organization {
+  id: string
+  name: string
+  cnpj?: string
+  created_at: string
+}
+
+export interface LearningPath {
+  id: string
+  organization_id?: string
+  title: string
+  description?: string
+  reward_points: number
+  created_by?: string
+  is_public: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface LearningPathCourse {
+  id: string
+  path_id: string
+  course_id: string
+  order: number
+}
+
+export interface TrailProgress {
+  id: string
+  user_id: string
+  path_id: string
+  current_course_index: number
+  completed: boolean
+  completed_at?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface UserPoints {
+  id: string
+  user_id: string
+  total_points: number
+  level: number
+  current_streak: number
+  longest_streak: number
+  last_activity: string
+  updated_at: string
+}
+
+export interface Wallet {
+  id: string
+  user_id: string
+  balance: number
+  total_earned: number
+  total_spent: number
+  created_at: string
+  updated_at: string
+}
+
+export interface Transaction {
+  id: string
+  wallet_id: string
+  type: 'earn' | 'spend' | 'refund'
+  amount: number
+  description?: string
+  status: 'pending' | 'completed' | 'failed'
+  created_at: string
+}
+
+export interface Achievement {
+  id: string
+  code: string
+  name: string
+  description?: string
+  icon?: string
+  points_required: number
+  created_at: string
+}
+
+export interface UserAchievement {
+  id: string
+  user_id: string
+  achievement_id: string
+  unlocked_at: string
+  achievement?: Achievement
+}
+
+export interface Voucher {
+  id: string
+  organization_id?: string
+  title: string
+  description?: string
+  cost_coins: number
+  code: string
+  is_active: boolean
+  created_at: string
+}
+
+export interface VoucherRedemption {
+  id: string
+  user_id: string
+  voucher_id: string
+  redeemed_at: string
+  voucher?: Voucher
+}
+
+export interface ReadingSession {
+  id: string
+  user_id: string
+  course_id: string
+  started_at: string
+  ended_at?: string
+  current_position: number
+  completed: boolean
+  words_read: number
+  created_at: string
+  updated_at: string
+}
+
+export interface ReadingBehavior {
+  id: string
+  session_id: string
+  user_id: string
+  avg_speed_wpm: number
+  reread_count: number
+  pause_count: number
+  created_at: string
+}
+
+export interface ReadingVocabulary {
+  id: string
+  user_id: string
+  session_id?: string
+  word: string
+  times_seen: number
+  created_at: string
+}
+
+export interface MoodEntry {
+  id: string
+  user_id: string
+  mood_score: number
+  feelings: string[]
+  notes?: string
+  created_at: string
+}
+
+export interface BookCheckpoint {
+  id: string
+  course_id: string
+  position: number
+  question: string
+  correct_answer: string
+  created_at: string
+}
+
+export interface CheckpointResponse {
+  id: string
+  session_id: string
+  checkpoint_id: string
+  user_id: string
+  answer: string
+  score?: number
+  passed: boolean
+  created_at: string
+}
+
+export interface ParentChildRelationship {
+  id: string
+  parent_id: string
+  child_id: string
+  relationship: string
+  created_at: string
+}
+
+export interface ParentalAlert {
+  id: string
+  parent_id: string
+  child_id: string
+  title: string
+  description?: string
+  severity: 'low' | 'medium' | 'high'
+  is_read: boolean
+  created_at: string
+}
+
+export interface CorporateDocument {
+  id: string
+  organization_id: string
+  title: string
+  content: string
+  required_comprehension: number
+  created_at: string
+  updated_at: string
+}
+
+export interface CorporateDocumentAssignment {
+  id: string
+  user_id: string
+  document_id: string
+  completed: boolean
+  compliance_verified: boolean
+  completed_at?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface Certificate {
+  id: string
+  user_id: string
+  course_id?: string
+  document_id?: string
+  type: 'course' | 'document' | 'trail'
+  title: string
+  certificate_url?: string
+  issued_at: string
+}
+
