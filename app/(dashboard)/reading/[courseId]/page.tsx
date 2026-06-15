@@ -218,7 +218,8 @@ export default function ReadingSessionPage() {
     }
   }
 
-  const handleAudioComplete = (_blob: Blob) => {
+  const handleAudioComplete = (blob: Blob) => {
+    console.debug('Áudio gravado:', blob.size, 'bytes')
     toast.success('Áudio gravado com sucesso! Clique em Concluir para analisar.')
   }
 
