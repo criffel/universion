@@ -93,7 +93,7 @@ export default function RegisterPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="seu.email@universidade.br"
+                placeholder="seu.email@exemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -111,6 +111,8 @@ export default function RegisterPage() {
                   <SelectItem value="professor">Professor</SelectItem>
                   <SelectItem value="coordenador">Coordenador</SelectItem>
                   <SelectItem value="diretor">Diretor</SelectItem>
+                  <SelectItem value="responsavel">Responsável (Pai/Mãe)</SelectItem>
+                  <SelectItem value="empresa">Empresa (RH/Líder/Gerente)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

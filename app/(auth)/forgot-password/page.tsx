@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { GraduationCap, Loader2, CheckCircle2 } from 'lucide-react'
+import { BookOpen, Loader2, CheckCircle2 } from 'lucide-react'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -38,7 +38,7 @@ export default function ForgotPasswordPage() {
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
             <div className="bg-primary p-3 rounded-full">
-              <GraduationCap className="h-8 w-8 text-primary-foreground" />
+              <BookOpen className="h-8 w-8 text-primary-foreground" />
             </div>
           </div>
           <CardTitle className="text-2xl text-center">Recuperar Senha</CardTitle>
@@ -66,7 +66,7 @@ export default function ForgotPasswordPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="seu.email@universidade.br"
+                  placeholder="seu.email@exemplo.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
