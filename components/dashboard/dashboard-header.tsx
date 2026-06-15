@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { GraduationCap, LogOut, User, Settings, Flame, Trophy, Coins } from 'lucide-react'
+import { BookOpen, LogOut, User, Settings, Flame, Trophy, Coins } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
@@ -127,9 +127,9 @@ export function DashboardHeader() {
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center gap-2">
             <div className="bg-primary p-2 rounded-lg">
-              <GraduationCap className="h-6 w-6 text-primary-foreground" />
+              <BookOpen className="h-6 w-6 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold tracking-tight">UniVersion</span>
+            <span className="text-xl font-bold tracking-tight">Leitura Mais</span>
           </Link>
 
           {/* Gamification horizontal widget for students */}
@@ -181,7 +181,7 @@ export function DashboardHeader() {
                     Conquistas e Loja
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push('/dashboard/trails')}>
-                    <GraduationCap className="mr-2 h-4 w-4" />
+                    <BookOpen className="mr-2 h-4 w-4" />
                     Minhas Trilhas
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />

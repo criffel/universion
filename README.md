@@ -1,6 +1,6 @@
-# UniVersion - Sistema de Gestão Universitária Inteligente
+# Leitura Mais - Plataforma Inteligente de Leitura e Aprendizado
 
-Sistema completo de gestão universitária com suporte a cursos, materiais de apoio, múltiplos perfis de usuário (aluno, professor, coordenador, diretor) e agentes de IA para aprendizado.
+Plataforma inteligente de leitura e aprendizado com suporte a gamificação, controle parental, compliance corporativo (B2B) e IA de análise de fluência leitora.
 
 ## 🚀 Tecnologias
 

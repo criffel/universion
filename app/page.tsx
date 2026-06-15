@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { GraduationCap, BookOpen, Users, Brain, Video, MessageSquare } from 'lucide-react'
+import { BookOpen, Users, Brain, Video, MessageSquare } from 'lucide-react'
 
 export default function Home() {
   return (
@@ -8,9 +8,9 @@ export default function Home() {
       <nav className="container mx-auto px-4 py-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <div className="bg-primary p-2 rounded-lg">
-            <GraduationCap className="h-6 w-6 text-primary-foreground" />
+            <BookOpen className="h-6 w-6 text-primary-foreground" />
           </div>
-          <span className="text-2xl font-bold">UniVersion</span>
+          <span className="text-2xl font-bold">Leitura Mais</span>
         </div>
         <div className="flex gap-4">
           <Link href="/login">
@@ -25,10 +25,10 @@ export default function Home() {
       <main className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto mb-16">
           <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            Sistema de Gestão Universitária Inteligente
+            Plataforma Inteligente de Leitura e Aprendizado
           </h1>
           <p className="text-xl text-gray-600 mb-8">
-            Plataforma completa para gestão de cursos, materiais de apoio e aprendizado com inteligência artificial
+            Desenvolvimento de fluência leitora, gamificação, controle parental e compliance corporativo em um único lugar.
           </p>
           <div className="flex gap-4 justify-center">
             <Link href="/register">
@@ -97,7 +97,7 @@ export default function Home() {
 
           <div className="bg-white p-6 rounded-xl shadow-lg">
             <div className="bg-indigo-100 p-3 rounded-lg w-fit mb-4">
-              <GraduationCap className="h-6 w-6 text-indigo-600" />
+              <BookOpen className="h-6 w-6 text-indigo-600" />
             </div>
             <h3 className="text-xl font-semibold mb-2">Materiais Diversos</h3>
             <p className="text-gray-600">
@@ -108,7 +108,7 @@ export default function Home() {
       </main>
 
       <footer className="container mx-auto px-4 py-8 text-center text-gray-600">
-        <p>© 2024 UniVersion. Sistema de Gestão Universitária.</p>
+        <p>© 2026 Leitura Mais. Todos os direitos reservados.</p>
       </footer>
     </div>
   )

@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useAuth } from '@/hooks/useAuth'
-import { GraduationCap, Loader2 } from 'lucide-react'
+import { BookOpen, Loader2 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,12 +46,12 @@ export default function LoginPage() {
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
             <div className="bg-primary p-3 rounded-full">
-              <GraduationCap className="h-8 w-8 text-primary-foreground" />
+              <BookOpen className="h-8 w-8 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">UniVersion</CardTitle>
+          <CardTitle className="text-2xl text-center">Leitura Mais</CardTitle>
           <CardDescription className="text-center">
-            Sistema de Gestão Universitária
+            Plataforma Inteligente de Leitura
           </CardDescription>
         </CardHeader>
         <CardContent>
